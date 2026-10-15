@@ -61,6 +61,9 @@ public class SecurityConfig {
                     // Infrastructure and documentation — publicly accessible
                     .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    // The built React site served from classpath:/static (login happens in the browser)
+                    .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**",
+                            "/favicon.svg", "/icons.svg").permitAll()
                     // Everything else requires a valid Google JWT
                     .anyRequest().authenticated()
             )

@@ -62,7 +62,24 @@ With `.env` configured, start PostgreSQL, Redis, and the API:
 docker compose up --build
 ```
 
-The backend listens on [http://localhost:8080](http://localhost:8080). Stop the services with `Ctrl+C`, or run `docker compose down`. Persistent PostgreSQL data is stored in the `postgres_data` volume.
+The backend listens on [http://localhost:8080](http://localhost:8080) and, because the Docker image bundles the built frontend, it also serves the website there (Google sign-in then needs `http://localhost:8080` as an authorized JavaScript origin). Stop the services with `Ctrl+C`, or run `docker compose down`. Persistent PostgreSQL data is stored in the `postgres_data` volume.
+
+## Deploy as a single cloud service (e.g. Render)
+
+The `Dockerfile` builds the React frontend and bundles it into the Spring Boot JAR, so one container serves both the website and the API on one URL. That means no CORS setup and only one Google origin to register.
+
+1. Create a PostgreSQL database and a Redis-compatible (Key Value) instance on your host.
+2. Create a Web Service from this GitHub repo using the `Dockerfile`, with auto-deploy on push to `main`.
+3. Set these environment variables on the web service:
+   - `DATABASE_URL` as `jdbc:postgresql://HOST:5432/DBNAME` (it must start with `jdbc:`; do not paste the host's `postgres://` link), plus `DATABASE_USERNAME` and `DATABASE_PASSWORD`
+   - `REDIS_HOST` and `REDIS_PORT`. If your Redis requires a password or TLS, also set `SPRING_DATA_REDIS_PASSWORD` and `SPRING_DATA_REDIS_SSL_ENABLED=true`
+   - `LLM_API_KEY`, `LLM_BASE_URL` and `LLM_MODEL`
+   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+   - `VITE_GOOGLE_CLIENT_ID` (same value as `GOOGLE_CLIENT_ID`). Render passes service env vars to the Docker build, which is how the frontend gets it, so set it **before** the first deploy.
+4. In the Google Cloud console, add the deployed service URL (for example `https://your-app.onrender.com`) under Authorized JavaScript origins.
+5. Use `/actuator/health` as the health check path.
+
+Free tiers may put the service to sleep when idle, so open the site a few minutes before a demo.
 
 ## Run services locally
 
